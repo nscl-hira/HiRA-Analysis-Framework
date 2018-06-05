@@ -185,7 +185,7 @@ int HiRAReader::LoadSiCalibration(const char * file_name)
     double slope;
     double error_slope;
 
-    LineStream >> FB >> numtel >> numstrip >> intercept >> error_intercept >> slope >> error_slope;
+    LineStream >> FB >> numtel >> numstrip >> intercept >> slope;
 
     HiRASiCalibration newCalib;
     newCalib.numtel=numtel;
