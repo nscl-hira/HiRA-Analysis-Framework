@@ -357,7 +357,7 @@ double HiRAReader::GetSibHiLowMatched(int chHi, int chLow, int telescope, int nu
 //____________________________________________________
 double HiRAReader::GetCsIEMeV(int ch, int telescope, int numcsi, int Z, int A)
 {
-  return fCsICalibrationModule.GetEnergyValue(ch, telescope, numcsi, Z, A);
+  return fCsICalibrationModule.GetEnergyValue(gRandom->Uniform(ch-0.5,ch+0.5), telescope, numcsi, Z, A);
 }
 
 //____________________________________________________

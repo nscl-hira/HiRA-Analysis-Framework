@@ -21,6 +21,7 @@
 #include <TMultiGraph.h>
 #include <TLatex.h>
 #include <TCanvas.h>
+#include <TRandom3.h>
 #include <HTHiRARootEvent.h>
 #include <HiRAGeometry.h>
 #include <HiRASiCalibration.h>

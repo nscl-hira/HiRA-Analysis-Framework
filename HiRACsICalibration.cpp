@@ -9,6 +9,7 @@ fPulserLoaded(false)
   for(int i=0; i<CSICALIB_NUM_TEL; i++) {
     for(int j=0; j<CSICALIB_NUM_CSI_TEL; j++) {
       fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j]=0;
+      fCsIChToVExtrapolated [i*CSICALIB_NUM_CSI_TEL+j]=0;
     }
   }
   for(int i=0; i<Z_MAX; i++) {
@@ -27,6 +28,7 @@ HiRACsICalibrationManager::~HiRACsICalibrationManager()
     for(int j=0; j<CSICALIB_NUM_CSI_TEL; j++) {
       if(fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j]) {
         delete fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j];
+        delete fCsIChToVExtrapolated [i*CSICALIB_NUM_CSI_TEL+j];
       }
     }
   }
@@ -50,6 +52,7 @@ void HiRACsICalibrationManager::Clear()
       }
       if(fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j]) {
         delete fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j];
+        delete fCsIChToVExtrapolated [i*CSICALIB_NUM_CSI_TEL+j];
       }
     }
   }
@@ -97,7 +100,8 @@ int HiRACsICalibrationManager::LoadPulserInfo(const char * file_name)
 
   for(int i=0; i<CSICALIB_NUM_TEL; i++) {
     for(int j=0; j<CSICALIB_NUM_CSI_TEL; j++) {
-      fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j] = new TGraph(fChValues[i*CSICALIB_NUM_CSI_TEL+j].size(), fChValues[i*CSICALIB_NUM_CSI_TEL+j].data(), fVoltageValues[i*CSICALIB_NUM_CSI_TEL+j].data());
+      fCsIChToVExtrapolated [i*CSICALIB_NUM_CSI_TEL+j] = new TGraph(fChValues[i*CSICALIB_NUM_CSI_TEL+j].size(), fChValues[i*CSICALIB_NUM_CSI_TEL+j].data(), fVoltageValues[i*CSICALIB_NUM_CSI_TEL+j].data());
+      fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j] = new TSpline3(Form("CsIChToVInterpolated%02d_%02d", i, j), fCsIChToVExtrapolated [i*CSICALIB_NUM_CSI_TEL+j]);
       //fCsIChToVInterpolated [i*CSICALIB_NUM_CSI_TEL+j]->SetBit(TGraph::kIsSortedX);
     }
   }
@@ -110,7 +114,11 @@ int HiRACsICalibrationManager::LoadPulserInfo(const char * file_name)
 double HiRACsICalibrationManager::GetVoltageValue(double ch, int numtel, int numcsi) const
 {
   if(fCsIChToVInterpolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]==0) return -1;
-  return fCsIChToVInterpolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]->Eval(ch,0,"");
+  if(ch>=fCsIChToVInterpolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]->GetXmin() && ch<=fCsIChToVInterpolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]->GetXmax()) {
+    return fCsIChToVInterpolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]->Eval(ch);
+  } else {
+    return fCsIChToVExtrapolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]->Eval(ch,0,"");
+  }
 }
 
 //______________________________________________
@@ -142,7 +150,7 @@ void HiRACsICalibrationManager::DrawChVoltage(int numtel, int numcsi) const
 
   for(int i=0; i<NPointsInterpolation; i++) {
     CsChPointsInterpolation[i]=double(i*4096)/NPointsInterpolation;
-    CsVoltagePointsInterpolation[i]=fCsIChToVInterpolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]->Eval(CsChPointsInterpolation[i],0,"");
+    CsVoltagePointsInterpolation[i]=fCsIChToVExtrapolated[numtel*CSICALIB_NUM_CSI_TEL+numcsi]->Eval(CsChPointsInterpolation[i],0,"");
   }
 
   TGraph *PulserGraph = new TGraph(NPoints,CsChPoints,CsVoltagePoints);
@@ -256,7 +264,8 @@ void HiRACsICalibration::InitCalibration()
       delete light_response;
     }
     fCalibrationInitialized=true;
-    fVtoE= new TGraph(fCsIRawV.size(), fCsIRawV.data(), fLISEEnergyMeV.data());
+    fVtoEExtrapolated= new TGraph(fCsIRawV.size(), fCsIRawV.data(), fLISEEnergyMeV.data());
+    fVtoEInterpolated = new TSpline3("VtoEInterpolated", fVtoEExtrapolated);
   } else
   {
     fCalibrationInitialized=false;
@@ -269,7 +278,11 @@ double HiRACsICalibration::GetEnergy(double V) const
   if(!fCalibrationInitialized) {
     return -1;
   }
-  return fVtoE->Eval(V,0,"");
+  if(V>=fVtoEInterpolated->GetXmin() && V<=fVtoEInterpolated->GetXmax()) {
+    return fVtoEInterpolated->Eval(V);
+  } else {
+    return fVtoEExtrapolated->Eval(V,0,"");
+  }
 }
 
 //______________________________________________
@@ -316,7 +329,7 @@ void HiRACsICalibration::CheckCalibrationValidity(const char * file_name, int te
 
   for(int i=0; i<NPointsInterpolation; i++) {
     CsIVoltagePointsInterpolation[i]=double(i*2)/NPointsInterpolation;
-    CsIEnergyPointsInterpolation[i]=fVtoE->Eval(CsIVoltagePointsInterpolation[i],0,"");
+    CsIEnergyPointsInterpolation[i]=fVtoEExtrapolated->Eval(CsIVoltagePointsInterpolation[i],0,"");
   }
 
   TGraph * GraphCalibration = new TGraph(NPointsInterpolation,CsIVoltagePointsInterpolation,CsIEnergyPointsInterpolation);

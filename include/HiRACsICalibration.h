@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <TCanvas.h>
 #include <TF1.h>
+#include <TSpline.h>
 #include <math.h>
 #include <cmath>
 
@@ -85,7 +86,8 @@ private:
   //Calibration sampling to speed-up calc
   std::vector<double> fCsIRawV;
   std::vector<double> fLISEEnergyMeV;
-  TGraph * fVtoE;
+  TSpline3 * fVtoEInterpolated;
+  TGraph * fVtoEExtrapolated;
   ///////////////////////////////////////
 
 };
@@ -110,7 +112,8 @@ private:
 
   std::vector<double> fChValues [CSICALIB_NUM_TEL*CSICALIB_NUM_CSI_TEL];
   std::vector<double> fVoltageValues [CSICALIB_NUM_TEL*CSICALIB_NUM_CSI_TEL];
-  TGraph * fCsIChToVInterpolated [CSICALIB_NUM_TEL*CSICALIB_NUM_CSI_TEL];
+  TGraph * fCsIChToVExtrapolated [CSICALIB_NUM_TEL*CSICALIB_NUM_CSI_TEL];
+  TSpline3 * fCsIChToVInterpolated [CSICALIB_NUM_TEL*CSICALIB_NUM_CSI_TEL];
 
   HiRACsICalibration * fCalib[Z_MAX][A_MAX][CSICALIB_NUM_TEL*CSICALIB_NUM_CSI_TEL];
 
