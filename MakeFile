@@ -11,10 +11,10 @@ OBJS := HiRAReader.$(ObjSuf) EnergyLossModule.$(ObjSuf) nuclear_masses.$(ObjSuf)
 DEPS := $(_OBJS:.$(ObjSuf)=.$(DepSuf))
 
 ROOTHTHIRA_HDRS  := HTHiRARootEvent.h HTHiRALinkDef.h
-ROOTHTHIRA_DICT  := HTHIRADict.$(SrcSuf)
+ROOTHTHIRA_DICT  := HTHiRADict.$(SrcSuf)
 ROOTHTHIRA_DICTH := $(ROOTHTHIRA_DICT:.$(SrcSuf)=.h)
 ROOTHTHIRA_DICTO := $(ROOTHTHIRA_DICT:.$(SrcSuf)=.$(ObjSuf))
-ROOTHTHIRA_PCM   := HTHIRADict$(PcmSuf)
+ROOTHTHIRA_PCM   := HTHiRADict$(PcmSuf)
 
 INCLUDES  := -I./include
 INCLUDES  += -I./Nuclear_Masses
